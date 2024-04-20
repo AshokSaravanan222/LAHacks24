@@ -123,12 +123,12 @@ const CameraFeed: React.FC = () => {
     return (
         <div className="flex flex-col items-center p-4 relative">
             <button onClick={() => setShowCamera(!showCamera)}
-                    className="mb-4 px-4 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-700 transition duration-300">
+                    className="mb-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-400 transition shadow">
                 {showCamera ? 'Hide Camera' : 'Show Camera'}
             </button>
             {showCamera && (
-                <div className="relative w-full max-w-lg">
-                    <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg shadow-xl" />
+                <div className="relative w-full max-w-lg transition">
+                    <video ref={videoRef} autoPlay playsInline className="w-full rounded shadow-lg" />
                     <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                 </div>
             )}
