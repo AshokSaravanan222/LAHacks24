@@ -62,6 +62,8 @@ class Inferencer:
         prediction_fn = self.interpreter.get_signature_runner('serving_default')
         ROWS_PER_FRAME = 543
 
+        # input_data shoulb be the x,y,z 
+
         # change the input_data to the format that the model expects
         data_columns = ['x', 'y', 'z']
         # ready to change the path to the pd 
@@ -85,7 +87,6 @@ class Inferencer:
         
         result=decoder(p.argmax())
         print(result)
-
 
         
 
