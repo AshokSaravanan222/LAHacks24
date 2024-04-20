@@ -1,7 +1,6 @@
-'use client'
+'use-client'
 import React, { useState, useRef, useEffect } from 'react';
-import {HolisticLandmarker, FilesetResolver, HolisticLandmarkerResult} from '@mediapipe/tasks-vision';
-// import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
+import { HolisticLandmarker, FilesetResolver, HolisticLandmarkerResult } from '@mediapipe/tasks-vision';
 import {
     HAND_CONNECTIONS,
     POSE_CONNECTIONS,
@@ -9,6 +8,10 @@ import {
     LandmarkConnectionArray,
     NormalizedLandmark
 } from '@mediapipe/holistic';
+import { socket } from '../socket';
+
+// Define the type for a batch of landmarks
+type LandmarkBatch = NormalizedLandmark[][];
 
 const CameraFeed: React.FC = () => {
     const [showCamera, setShowCamera] = useState<boolean>(false);
@@ -16,56 +19,50 @@ const CameraFeed: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
     const [landmarkCounter, setLandmarkCounter] = useState(0);
-    const [landmarksBatch, setLandmarksBatch] = useState<NormalizedLandmark[][]>([]);
+    // Initialize landmarksBatch with the correct type
+    const [landmarksBatch, setLandmarksBatch] = useState<LandmarkBatch>([]);
+    const [message, setMessage] = useState(''); // State to store the response
 
     const processLandmarks = (results: HolisticLandmarkerResult) => {
         const allLandmarks = [
-            ...(results.leftHandLandmarks.length != 0 ? results.leftHandLandmarks[0] : []),
-            ...(results.rightHandLandmarks.length != 0 ? results.rightHandLandmarks[0] : []),
-            ...(results.poseLandmarks.length != 0 ? results.poseLandmarks[0] : []),
-            ...(results.faceLandmarks.length != 0 ? results.faceLandmarks[0] : []),
+            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
+            ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
         ];
-    
-        const landmarksXYZ: NormalizedLandmark[] = allLandmarks.map(landmark => ({
-            x: landmark.x,
-            y: landmark.y,
-            z: landmark.z || 0 // Ensuring 'z' exists
+        
+        // Step 1: Initialize placeholders for axis checks
+        const xValues = allLandmarks.map(landmark => landmark ? landmark.x : null);
+        const yValues = allLandmarks.map(landmark => landmark ? landmark.y : null);
+        const zValues = allLandmarks.map(landmark => landmark ? landmark.z : null);
+        
+        // Step 2: Determine if all values are null for each axis
+        const allXNull = xValues.every(value => value === null);
+        const allYNull = yValues.every(value => value === null);
+        const allZNull = zValues.every(value => value === null);
+        
+        // Step 3: Map landmarks to the final structure with null checks
+        const landmarksXYZ = allLandmarks.map(landmark => ({
+            x: allXNull ? null : (landmark && landmark.x !== undefined ? landmark.x : null),
+            y: allYNull ? null : (landmark && landmark.y !== undefined ? landmark.y : null),
+            z: allZNull ? null : (landmark && landmark.z !== undefined ? landmark.z : null) 
         }));
-    
-        // Update state for batching landmarks
-        setLandmarksBatch(prev => [...prev, landmarksXYZ]);
-        setLandmarkCounter(prev => {
-            const newCount = prev + 1;
-            if (newCount === 10) {
-                // Only trigger POST request on the 10th call
-                fetch('http://127.0.0.1:5000/detect', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ landmarksBatch })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Success:', data);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-    
-                // Clear batch and reset counter
-                return 0; // Reset counter and trigger batch clear in the next line
+
+        
+        setLandmarksBatch((prev: LandmarkBatch) => {
+            const newBatch = [...prev, landmarksXYZ];
+            if (prev.length === 9) { // Check if the new batch will be the 10th one
+                socket.emit('landmark', JSON.stringify(newBatch[0])); // Send the batch to the server
+                setLandmarkCounter(0); // Reset counter
+                return []; // Clear the batch
             }
-            return newCount; // Otherwise, just update the count
+            return newBatch; // Otherwise, just update the batch
         });
-    
-        if (landmarkCounter === 9) { // This checks if the last update was the 10th one
-            setLandmarksBatch([]); // Clear the batch if the last update hit the limit
-        }
     };
+    
+    
 
     const loadModel = async () => {
-        console.log('Loading model...');
         const vision = await FilesetResolver.forVisionTasks(
             "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
         );
@@ -77,7 +74,6 @@ const CameraFeed: React.FC = () => {
             },
             runningMode: "IMAGE",
         });
-        console.log('Model loaded!');
     };
 
     const startCamera = async () => {
@@ -119,12 +115,9 @@ const CameraFeed: React.FC = () => {
 
         const holisticResults = await holisticLandmarkerRef.current.detect(videoRef.current);
         processLandmarks(holisticResults);
-        console.log('Holistic results:', holisticResults);
 
         const draw = (results: NormalizedLandmark[][], connection_array: LandmarkConnectionArray) => {
             if (results && results.length > 0) {
-                console.log('Landmarks detected:', results);
-        
                 results.forEach((landmarkGroup: NormalizedLandmark[]) => {
                     // Draw connections using connection_array
                     connection_array.forEach(([start, end]) => {
@@ -173,6 +166,19 @@ const CameraFeed: React.FC = () => {
             requestAnimationFrame(predictWebcam);
         }
     };
+
+    useEffect(() => {
+        // Setting up the listener for the 'response' event
+        socket.on('output', (data: any) => {
+            console.log('Received data:', data);
+            setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
+        });
+
+        // Cleanup function to remove the listener
+        return () => {
+            socket.off('output');
+        };
+    }, []);
 
     useEffect(() => {
         if (showCamera) {
