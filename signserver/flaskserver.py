@@ -10,17 +10,17 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 interpreter =  Inferencer(model_path="signserver/model.tflite")
 
 
-@socketio.on('message')
+@socketio.on('message') # test 
 def handle_message(data):
     # print function can not work at handle_message
     print("Reciing message")
     print('received message: ', json.dumps(data))
     socketio.emit('output', interpreter.predict(data))
 
-@socketio.on('landmarks')
+@socketio.on('landmark') # from end 
 def handle_landmarks(data):
-    print('received landmarks: ', json.dumps(data))
-    socketio.emit('output', interpreter.predict(data["landmarks"]))
+   # print('received landmarks: ', json.dumps(data))
+    socketio.emit('output', interpreter.predict(data)) #
     
 
 # if someone connect to the server, it will print the message
