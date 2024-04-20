@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
-import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
+// import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
 import { HAND_CONNECTIONS } from '@mediapipe/hands';
 
 const CameraFeed: React.FC = () => {
@@ -31,8 +31,13 @@ const CameraFeed: React.FC = () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 videoRef.current!.srcObject = stream;
-                await loadModel();
-                requestAnimationFrame(predictWebcam);
+                videoRef.current!.onloadeddata = async () => {
+                    console.log("Video data loaded");
+                    if (videoRef.current!.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+                        await loadModel();
+                        requestAnimationFrame(predictWebcam);
+                    }
+                };
             } catch (error) {
                 console.error('Error accessing the camera: ', error);
             }
@@ -65,6 +70,11 @@ const CameraFeed: React.FC = () => {
             results.landmarks.forEach(landmarks => {
                 // Draw connections using HAND_CONNECTIONS
                 HAND_CONNECTIONS.forEach(([start, end]) => {
+                    if (!canvasRef.current) {
+                        console.error('Canvas not found');
+                        return;
+                    }
+
                     const startPoint = landmarks[start];
                     const endPoint = landmarks[end];
 
@@ -78,6 +88,11 @@ const CameraFeed: React.FC = () => {
 
                 // Draw each landmark as a circle
                 landmarks.forEach(landmark => {
+                    if (!canvasRef.current) {
+                        console.error('Canvas not found');
+                        return;
+                    }
+
                     ctx.beginPath();
                     ctx.arc(
                         landmark.x * canvasRef.current.width,
