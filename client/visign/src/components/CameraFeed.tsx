@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
-import { drawConnectors, drawLandmarks, HAND_CONNECTIONS } from '@mediapipe/drawing_utils';
+import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
+import { HAND_CONNECTIONS } from '@mediapipe/hands';
 
 const CameraFeed: React.FC = () => {
     const [showCamera, setShowCamera] = useState<boolean>(false);
@@ -50,22 +51,40 @@ const CameraFeed: React.FC = () => {
         if (!handLandmarkerRef.current || !videoRef.current || !canvasRef.current) return;
 
         const ctx = canvasRef.current.getContext('2d');
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
+        if (!ctx) {
+            console.error('Failed to get canvas context');
+            return;
+        }
 
-        ctx!.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
         const results = await handLandmarkerRef.current.detect(videoRef.current);
+        if (results && results.landmarks.length > 0) {
+            console.log('Landmarks detected:', results.landmarks);
 
-        if (results && results.landmarks) {
-            console.log('Landmarks detected!');
-            console.log(results.landmarks);
-            for (const landmarks of results.landmarks) {
-                drawConnectors(ctx!, landmarks, HAND_CONNECTIONS, {
-                    color: "#00FF00",
-                    lineWidth: 50
+            // Draw each landmark as a circle
+            results.landmarks.forEach(landmarks => {
+                landmarks.forEach(landmark => {
+                    ctx.beginPath();
+                    ctx.arc(landmark.x * canvasRef.current.width, landmark.y * canvasRef.current.height, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fill();
                 });
-                drawLandmarks(ctx!, landmarks, { color: "#FF0000", lineWidth: 2 });
-            }
+            });
+
+            // Optionally, draw lines between specific landmarks to connect them
+            // Example: Connect landmark 0 to landmark 1
+            results.landmarks.forEach(landmarks => {
+                for (let i = 0; i < landmarks.length - 1; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(landmarks[i].x * canvasRef.current.width, landmarks[i].y * canvasRef.current.height);
+                    ctx.lineTo(landmarks[i + 1].x * canvasRef.current.width, landmarks[i + 1].y * canvasRef.current.height);
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
         }
 
         if (showCamera) {
