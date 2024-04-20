@@ -71,8 +71,12 @@ class Inferencer:
         # change the input_data to the format that the model expects
         data_columns = ['x', 'y', 'z']
         # ready to change the path to the pd 
+    
         data = pd.read_json(input_data) # change the code 
-
+        print(data)
+        print(data.shape)
+        print(type(input_data)) 
+        print(input_data) # str
 
         n_frames = int(len(data) / ROWS_PER_FRAME)
         data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
