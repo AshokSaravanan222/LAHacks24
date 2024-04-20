@@ -75,11 +75,15 @@ class Inferencer:
         data = pd.read_json(input_data) # change the code 
         print(data)
         print(data.shape)
+        print(type(data))
         print(type(input_data)) 
         print(input_data) # str
 
         n_frames = int(len(data) / ROWS_PER_FRAME)
+        
         data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
+        #ValueError: cannot reshape array of size 1659 into shape (1,543,3)
+
         xyz = data.astype(np.float32)
         train_df = pd.read_csv('signserver/train.csv')
 
