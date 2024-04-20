@@ -56,34 +56,37 @@ const CameraFeed: React.FC = () => {
             return;
         }
 
-        // Clear the canvas
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
         const results = await handLandmarkerRef.current.detect(videoRef.current);
         if (results && results.landmarks.length > 0) {
             console.log('Landmarks detected:', results.landmarks);
 
-            // Draw each landmark as a circle
             results.landmarks.forEach(landmarks => {
-                landmarks.forEach(landmark => {
-                    ctx.beginPath();
-                    ctx.arc(landmark.x * canvasRef.current.width, landmark.y * canvasRef.current.height, 5, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fill();
-                });
-            });
+                // Draw connections using HAND_CONNECTIONS
+                HAND_CONNECTIONS.forEach(([start, end]) => {
+                    const startPoint = landmarks[start];
+                    const endPoint = landmarks[end];
 
-            // Optionally, draw lines between specific landmarks to connect them
-            // Example: Connect landmark 0 to landmark 1
-            results.landmarks.forEach(landmarks => {
-                for (let i = 0; i < landmarks.length - 1; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(landmarks[i].x * canvasRef.current.width, landmarks[i].y * canvasRef.current.height);
-                    ctx.lineTo(landmarks[i + 1].x * canvasRef.current.width, landmarks[i + 1].y * canvasRef.current.height);
+                    ctx.moveTo(startPoint.x * canvasRef.current.width, startPoint.y * canvasRef.current.height);
+                    ctx.lineTo(endPoint.x * canvasRef.current.width, endPoint.y * canvasRef.current.height);
                     ctx.strokeStyle = '#00FF00';
                     ctx.lineWidth = 2;
                     ctx.stroke();
-                }
+                });
+
+                // Draw each landmark as a circle
+                landmarks.forEach(landmark => {
+                    ctx.beginPath();
+                    ctx.arc(
+                        landmark.x * canvasRef.current.width,
+                        landmark.y * canvasRef.current.height,
+                        3, 0, 2 * Math.PI
+                    );
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fill();
+                });
             });
         }
 
