@@ -1,9 +1,16 @@
+import asyncio
 import google.generativeai as genai
-import os
 import random
+import openai
+from dotenv import load_dotenv
+import os
 
-# Hide my API Key later 
-genai.configure(api_key="AIzaSyBqF1tP8UWr9govt44Vu-frpALNVR38tgA")
+load_dotenv()
+
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_KEY
+genai.configure(api_key=GEMINI_KEY)
 
 generation_config = {
   "temperature": 1,
@@ -36,13 +43,16 @@ model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest",
                               safety_settings=safety_settings)
 
 def generate_response(word_set):
+
     input_prompt = (f'I am a new ASL learner and I have created an '
                     f'application where it translates ASL and prints out words. '
                     f'These words are later stored in to a set to avoid duplicates. '
                     f'The set currently contains: {", ".join(word_set)}. '
                     f'Generate a sentence based off of this set.')
     response = model.generate_content([input_prompt])
+    # print(response)
     generated_sentence = response._result.candidates[0].content.parts[0].text
+    print(generated_sentence)
     return generated_sentence
 
 def generate_10_words():
@@ -54,8 +64,21 @@ def generate_10_words():
 
     return new_list_of_10_words
 
-if __name__ == "__main__":
-    word_set = generate_10_words()
-    print(generate_response(word_set))
-    
+def stream_real_time_audio(response):
+    client = openai.OpenAI()
 
+    response = client.audio.speech.create(
+        model = "tts-1",
+        voice = "alloy",
+        input = response
+    )
+
+    response.stream_to_file("output.mp3")
+
+def main():
+    word_set = generate_10_words()
+    response = generate_response(word_set)
+    stream_real_time_audio(response)   
+
+if __name__ == "__main__":
+    main()
