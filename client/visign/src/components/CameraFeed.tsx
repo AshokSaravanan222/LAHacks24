@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useRef, useEffect } from 'react';
 import {HolisticLandmarker, FilesetResolver, HolisticLandmarkerResult} from '@mediapipe/tasks-vision';
 // import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
@@ -14,7 +15,54 @@ const CameraFeed: React.FC = () => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
-    // const handLandmarkerRef = useRef<HandLandmarker | null>(null);
+    const [landmarkCounter, setLandmarkCounter] = useState(0);
+    const [landmarksBatch, setLandmarksBatch] = useState<NormalizedLandmark[][]>([]);
+
+    const processLandmarks = (results: HolisticLandmarkerResult) => {
+        const allLandmarks = [
+            ...(results.leftHandLandmarks.length != 0 ? results.leftHandLandmarks[0] : []),
+            ...(results.rightHandLandmarks.length != 0 ? results.rightHandLandmarks[0] : []),
+            ...(results.poseLandmarks.length != 0 ? results.poseLandmarks[0] : []),
+            ...(results.faceLandmarks.length != 0 ? results.faceLandmarks[0] : []),
+        ];
+    
+        const landmarksXYZ: NormalizedLandmark[] = allLandmarks.map(landmark => ({
+            x: landmark.x,
+            y: landmark.y,
+            z: landmark.z || 0 // Ensuring 'z' exists
+        }));
+    
+        // Update state for batching landmarks
+        setLandmarksBatch(prev => [...prev, landmarksXYZ]);
+        setLandmarkCounter(prev => {
+            const newCount = prev + 1;
+            if (newCount === 10) {
+                // Only trigger POST request on the 10th call
+                fetch('http://127.0.0.1:5000/detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ landmarks: landmarksBatch })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+    
+                // Clear batch and reset counter
+                return 0; // Reset counter and trigger batch clear in the next line
+            }
+            return newCount; // Otherwise, just update the count
+        });
+    
+        if (landmarkCounter === 9) { // This checks if the last update was the 10th one
+            setLandmarksBatch([]); // Clear the batch if the last update hit the limit
+        }
+    };
 
     const loadModel = async () => {
         console.log('Loading model...');
@@ -70,6 +118,7 @@ const CameraFeed: React.FC = () => {
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
         const holisticResults = await holisticLandmarkerRef.current.detect(videoRef.current);
+        processLandmarks(holisticResults);
         console.log('Holistic results:', holisticResults);
 
         const draw = (results: NormalizedLandmark[][], connection_array: LandmarkConnectionArray) => {
