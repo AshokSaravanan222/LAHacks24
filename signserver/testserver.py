@@ -16,7 +16,8 @@ def connect():
 def disconnect():
     print('Disconnected from server')
 
-sample_path= '../signModel/data/2044/635217.parquet'
+#sample_path= '../signModel/data/2044/635217.parquet'
+sample_path= '../signModel/data/2044/3127189.parquet'
 def converdata(path):
     data_columns = ['x', 'y', 'z']
     # ready to change the path to the pd 
