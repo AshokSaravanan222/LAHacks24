@@ -1,7 +1,7 @@
 from flask import Flask
 app = Flask(__name__)
 
-@app.route('/', )
+@app.route('/', me)
 def hello_world():
     # take in the frames
     # run the model
