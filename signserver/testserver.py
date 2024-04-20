@@ -16,24 +16,33 @@ def connect():
 def disconnect():
     print('Disconnected from server')
 
-sample_path= 'signModeldata/2044/635217.parquet'
+sample_path= '../signModel/data/2044/635217.parquet'
 def converdata(path):
     data_columns = ['x', 'y', 'z']
     # ready to change the path to the pd 
     data = pd.read_parquet(path, columns=data_columns) # change the code 
     # convert the data to json
     return data.to_json(orient='records')
+
+# receive the message from the server
+@sio.on('output')
+def on_message(data):
+    print('Received message from server:', data)
     
 if __name__ == '__main__':
     # Connect to the server
-    sio.connect('http://localhost:5000')
+    sio.connect('http://localhost:8080')
 
     #Send a message to the server
     message = converdata(sample_path)
-    print(message)
+    # too large the message .
+
+    print("sending :","json test file")
     sio.emit('message', message)
     print('Sent message to server')
 
+sio.wait()
+
     # Disconnect from the server
-    sio.disconnect()
+   # sio.disconnect()
 

@@ -13,10 +13,10 @@ class Inferencer:
         Args:
         - model_path: Path to the saved TensorFlow model.
         """
-        self.interpreter = tf.lite.Interpreter(model_path="model.tflite")
+        self.interpreter = tf.lite.Interpreter(model_path)
 
 
-    def read_json_file(file_path):
+    def read_json_file(self,file_path):
         """Read a JSON file and parse it into a Python object.
 
         Args:
@@ -40,6 +40,10 @@ class Inferencer:
         except ValueError:
             # Raise an error if the file does not contain valid JSON data
             raise ValueError(f"Invalid JSON data in file: {file_path}")
+
+
+
+
 
     def predict(self, input_data):
         """
@@ -67,17 +71,18 @@ class Inferencer:
         # change the input_data to the format that the model expects
         data_columns = ['x', 'y', 'z']
         # ready to change the path to the pd 
-        data = pd.read_parquet(pq_path, columns=data_columns) # change the code 
+        data = pd.read_json(input_data) # change the code 
+
 
         n_frames = int(len(data) / ROWS_PER_FRAME)
         data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
         xyz = data.astype(np.float32)
-        train_df = pd.read_csv('train.csv')
+        train_df = pd.read_csv('signserver/train.csv')
 
         # decorder 
         print("\n\n... LOAD SIGN TO PREDICTION INDEX MAP FROM JSON FILE ...\n")
-        s2p_map = {k.lower():v for k,v in self.read_json_file(os.path.join("sign_to_prediction_index_map.json")).items()}
-        p2s_map = {v:k for k,v in self.read_json_file(os.path.join("sign_to_prediction_index_map.json")).items()}
+        s2p_map = {k.lower():v for k,v in self.read_json_file("signserver/sign_to_prediction_index_map.json").items()}
+        p2s_map = {v:k for k,v in self.read_json_file("signserver/sign_to_prediction_index_map.json").items()}
         encoder = lambda x: s2p_map.get(x.lower())
         decoder = lambda x: p2s_map.get(x)
         train_df['label'] = train_df.sign.map(encoder)
@@ -87,12 +92,6 @@ class Inferencer:
         
         result=decoder(p.argmax())
         print(result)
-
-        
-
-        # prediction = self.model.predict(input_data)
-        
-        # Perform any postprocessing if required
         
         return result
     
