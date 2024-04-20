@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask-SocketIO Client</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" integrity="sha384-EwQIfJBLgjys3w8Xb8ZDPYtJkmA8CyUD4f88N4CgEMhuMquuOmxX5iC6QloS4h9W" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        function sendMessage() {
+            var message = document.getElementById('message_input').value;
+            socket.emit('message', message);
+        }
+    </script>
+</head>
+<body>
+    <input type="text" id="message_input" />
+    <button onclick="sendMessage()">Send</button>
+</body>
+</html>
