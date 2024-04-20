@@ -43,7 +43,7 @@ const CameraFeed: React.FC = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ landmarks: landmarksBatch })
+                    body: JSON.stringify({ landmarksBatch })
                 })
                 .then(response => response.json())
                 .then(data => {
