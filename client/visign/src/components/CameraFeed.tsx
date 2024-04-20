@@ -1,27 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+import {HolisticLandmarker, FilesetResolver, HolisticLandmarkerResult} from '@mediapipe/tasks-vision';
 // import {drawConnectors, drawLandmarks, drawRectangle} from '@mediapipe/drawing_utils';
-import { HAND_CONNECTIONS } from '@mediapipe/hands';
+import {
+    HAND_CONNECTIONS,
+    POSE_CONNECTIONS,
+    FACEMESH_TESSELATION,
+    LandmarkConnectionArray,
+    NormalizedLandmark
+} from '@mediapipe/holistic';
 
 const CameraFeed: React.FC = () => {
     const [showCamera, setShowCamera] = useState<boolean>(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const handLandmarkerRef = useRef<HandLandmarker | null>(null);
+    const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
+    // const handLandmarkerRef = useRef<HandLandmarker | null>(null);
 
     const loadModel = async () => {
         console.log('Loading model...');
         const vision = await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
         );
-        handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
+        holisticLandmarkerRef.current = await HolisticLandmarker.createFromOptions(vision, {
             baseOptions: {
-                modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                modelAssetPath: `https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task`,
                 // modelAssetPath: `models/hand_landmarker.task`,
                 delegate: "GPU"
             },
             runningMode: "IMAGE",
-            numHands: 2
         });
         console.log('Model loaded!');
     };
@@ -53,7 +59,7 @@ const CameraFeed: React.FC = () => {
     };
 
     const predictWebcam = async () => {
-        if (!handLandmarkerRef.current || !videoRef.current || !canvasRef.current) return;
+        if (!holisticLandmarkerRef.current || !videoRef.current || !canvasRef.current) return;
 
         const ctx = canvasRef.current.getContext('2d');
         if (!ctx) {
@@ -63,47 +69,56 @@ const CameraFeed: React.FC = () => {
 
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        const results = await handLandmarkerRef.current.detect(videoRef.current);
-        if (results && results.landmarks.length > 0) {
-            console.log('Landmarks detected:', results.landmarks);
+        const holisticResults = await holisticLandmarkerRef.current.detect(videoRef.current);
+        console.log('Holistic results:', holisticResults);
 
-            results.landmarks.forEach(landmarks => {
-                // Draw connections using HAND_CONNECTIONS
-                HAND_CONNECTIONS.forEach(([start, end]) => {
-                    if (!canvasRef.current) {
-                        console.error('Canvas not found');
-                        return;
-                    }
-
-                    const startPoint = landmarks[start];
-                    const endPoint = landmarks[end];
-
-                    ctx.beginPath();
-                    ctx.moveTo(startPoint.x * canvasRef.current.width, startPoint.y * canvasRef.current.height);
-                    ctx.lineTo(endPoint.x * canvasRef.current.width, endPoint.y * canvasRef.current.height);
-                    ctx.strokeStyle = '#00FF00';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
+        const draw = (results: NormalizedLandmark[][], connection_array: LandmarkConnectionArray) => {
+            if (results && results.length > 0) {
+                console.log('Landmarks detected:', results);
+        
+                results.forEach((landmarkGroup: NormalizedLandmark[]) => {
+                    // Draw connections using connection_array
+                    connection_array.forEach(([start, end]) => {
+                        if (!canvasRef.current) {
+                            console.error('Canvas not found');
+                            return;
+                        }
+        
+                        const startPoint = landmarkGroup[start];
+                        const endPoint = landmarkGroup[end];
+        
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x * canvasRef.current.width, startPoint.y * canvasRef.current.height);
+                        ctx.lineTo(endPoint.x * canvasRef.current.width, endPoint.y * canvasRef.current.height);
+                        ctx.strokeStyle = '#00FF00';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    });
+        
+                    // Draw each landmark as a circle
+                    landmarkGroup.forEach(landmark => {
+                        if (!canvasRef.current) {
+                            console.error('Canvas not found');
+                            return;
+                        }
+        
+                        ctx.beginPath();
+                        ctx.arc(
+                            landmark.x * canvasRef.current.width,
+                            landmark.y * canvasRef.current.height,
+                            1, 0, 2 * Math.PI
+                        );
+                        ctx.fillStyle = '#FF0000';
+                        ctx.fill();
+                    });
                 });
+            }
+        };
 
-                // Draw each landmark as a circle
-                landmarks.forEach(landmark => {
-                    if (!canvasRef.current) {
-                        console.error('Canvas not found');
-                        return;
-                    }
-
-                    ctx.beginPath();
-                    ctx.arc(
-                        landmark.x * canvasRef.current.width,
-                        landmark.y * canvasRef.current.height,
-                        3, 0, 2 * Math.PI
-                    );
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fill();
-                });
-            });
-        }
+        draw(holisticResults.leftHandLandmarks, HAND_CONNECTIONS);
+        draw(holisticResults.rightHandLandmarks, HAND_CONNECTIONS);
+        draw(holisticResults.poseLandmarks, POSE_CONNECTIONS);
+        draw(holisticResults.faceLandmarks, FACEMESH_TESSELATION);
 
         if (showCamera) {
             requestAnimationFrame(predictWebcam);
