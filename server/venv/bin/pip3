@@ -1,4 +1,4 @@
-#!/Users/ashoksaravanan/Coding/LAHacks24/LAHacks24/server/venv/bin/python3.11
+#!/Users/geoffreylee/Documents/GitHub/LAHacks24/server/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

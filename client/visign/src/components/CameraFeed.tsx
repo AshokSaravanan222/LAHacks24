@@ -26,10 +26,10 @@ const CameraFeed: React.FC = () => {
 
     const processLandmarks = (results: HolisticLandmarkerResult) => {
         const allLandmarks = [
-            ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
             ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
             ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
+            ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
         ];
         
         // Step 1: Initialize placeholders for axis checks
@@ -169,29 +169,17 @@ const CameraFeed: React.FC = () => {
     };
 
     useEffect(() => {
-        // Handler for 'output' event
-        const handleOutput = (data: any) => {
-            console.log('Received output:', data);
-            setMessage(data); // Assuming 'data.message' is the part of the server response you want to use
-        };
-    
-        // Handler for 'response' event
-        const handleResponse = (data: any) => {
-            console.log('Received response:', data);
-            // Handle the data from the 'response' event
-            // You might want to set some other state based on this response
-        };
-    
-        // Setting up the listeners
-        socket.on('output', handleOutput);
-        socket.on('response', handleResponse);
-    
-        // Cleanup function to remove the listeners
+        // Setting up the listener for the 'response' event
+        socket.on('output', (data: any) => {
+            console.log('Received data:', data);
+            setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
+        });
+
+        // Cleanup function to remove the listener
         return () => {
-            socket.off('output', handleOutput);
-            socket.off('response', handleResponse);
+            socket.off('output');
         };
-    }, []); // Empty dependency array ensures this runs only once after the component mounts    
+    }, []);
 
     useEffect(() => {
         if (showCamera) {
@@ -215,7 +203,6 @@ const CameraFeed: React.FC = () => {
                     <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                 </div>
             )}
-            <text>{message}</text>
         </div>
     );
 }
