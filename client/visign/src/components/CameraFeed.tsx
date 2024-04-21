@@ -172,7 +172,7 @@ const CameraFeed: React.FC = () => {
         // Handler for 'output' event
         const handleOutput = (data: any) => {
             console.log('Received output:', data);
-            setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
+            setMessage(data); // Assuming 'data.message' is the part of the server response you want to use
         };
     
         // Handler for 'response' event
@@ -215,6 +215,7 @@ const CameraFeed: React.FC = () => {
                     <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                 </div>
             )}
+            <text>{message}</text>
         </div>
     );
 }
