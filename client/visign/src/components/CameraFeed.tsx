@@ -23,13 +23,14 @@ const CameraFeed: React.FC = () => {
     const [landmarksBatch, setLandmarksBatch] = useState<LandmarkBatch>([]);
     const [message, setMessage] = useState(''); // State to store the response
     const framesToSend = 10; // Number of frames to send in a batch
+    const [geminiText, setGeminiText] = useState('');
 
     const processLandmarks = (results: HolisticLandmarkerResult) => {
         const allLandmarks = [
-            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
             ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
+            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
+            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
         ];
         
         // Step 1: Initialize placeholders for axis checks
@@ -169,17 +170,28 @@ const CameraFeed: React.FC = () => {
     };
 
     useEffect(() => {
-        // Setting up the listener for the 'response' event
-        socket.on('output', (data: any) => {
+        // Handler for 'output' event
+        const handleOutput = (data: any) => {
             console.log('Received data:', data);
-            setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
-        });
-
-        // Cleanup function to remove the listener
-        return () => {
-            socket.off('output');
+            setMessage(data.message); // Update the message state
         };
-    }, []);
+    
+        // Handler for 'gemini' event
+        const handleGemini = (data: any) => {
+            console.log('Received gemini data:', data);
+            setGeminiText(data.message); // Update the geminiText state
+        };
+    
+        // Setting up the listeners
+        socket.on('output', handleOutput);
+        socket.on('gemini', handleGemini);
+    
+        // Cleanup function to remove the listeners
+        return () => {
+            socket.off('output', handleOutput);
+            socket.off('gemini', handleGemini);
+        };
+    }, [socket]);
 
     useEffect(() => {
         if (showCamera) {
@@ -203,6 +215,7 @@ const CameraFeed: React.FC = () => {
                     <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                 </div>
             )}
+            <text>{geminiText}</text>
         </div>
     );
 }
