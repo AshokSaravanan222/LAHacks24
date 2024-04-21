@@ -62,8 +62,6 @@ def generate_response(word_set):
     print(generated_sentence)
     return generated_sentence
 
-
-
 @socketio.on('message') # test 
 def handle_message(data):
     # print function can not work at handle_message
@@ -77,6 +75,12 @@ def handle_landmarks(data):
    prediction = interpreter.predict(data)
    handle_prediction(prediction)
    socketio.emit('output', prediction) #
+   
+@socketio.on('gemini') # test 
+def handle_gemini(data):
+    
+    
+    socketio.emit('output', response)
     
 
 # if someone connect to the server, it will print the message
