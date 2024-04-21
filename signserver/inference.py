@@ -73,11 +73,11 @@ class Inferencer:
         # ready to change the path to the pd 
     
         data = pd.read_json(input_data) # change the code 
-        print(data)
-        print(data.shape)
-        print(type(data))
-        print(type(input_data)) 
-        print(input_data) # str
+        # print(data)
+        # print(data.shape)
+        # print(type(data))
+        # print(type(input_data)) 
+        # print(input_data) # str
 
         n_frames = int(len(data) / ROWS_PER_FRAME)
         
