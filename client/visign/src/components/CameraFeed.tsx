@@ -22,9 +22,7 @@ const CameraFeed: React.FC = () => {
     // Initialize landmarksBatch with the correct type
     const [landmarksBatch, setLandmarksBatch] = useState<LandmarkBatch>([]);
     const [message, setMessage] = useState(''); // State to store the response
-    const [frameSkip, setFrameSkip] = useState(1); // Variable to control frame skipping
-    const [frameCount, setFrameCount] = useState(0); // Frame counter
-    const framesToSend = 5; // Number of frames to send in a batch
+    const framesToSend = 10; // Number of frames to send in a batch
 
     const processLandmarks = (results: HolisticLandmarkerResult) => {
         const allLandmarks = [
@@ -117,12 +115,7 @@ const CameraFeed: React.FC = () => {
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         
         const holisticResults = await holisticLandmarkerRef.current.detect(videoRef.current);
-        if (frameCount >= frameSkip) {
-            processLandmarks(holisticResults);
-            setFrameCount(0); // Reset the frame counter after processing
-        } else {
-            setFrameCount(frameCount + 1); // Increment frame counter
-        } 
+        processLandmarks(holisticResults);
         
         const draw = (results: NormalizedLandmark[][], connection_array: LandmarkConnectionArray) => {
             if (results && results.length > 0) {
