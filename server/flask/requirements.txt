@@ -1,0 +1,4 @@
+Flask
+Flask-SocketIO
+python-socketio[client]
+tensorflow  # or tensorflow-lite as required for your use
