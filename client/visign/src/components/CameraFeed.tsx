@@ -7,25 +7,20 @@ import {
 import { socket } from '@/socket';
 import { drawAllLandmarks } from '@/drawing_utils';
 
-// Define the type for a batch of landmarks
-type LandmarkBatch = NormalizedLandmark[][];
-type WordArray = string[]; // Define a type for your words array
-
 const CameraFeed: React.FC = () => {
     const [enableCamera, setEnableCamera] = useState<boolean>(false);
     const [showHands, setShowHands] = useState(true);
     const [showBody, setShowBody] = useState(true);
-    const [showFace, setShowFace] = useState(false);
+    const [showFace, setShowFace] = useState(true);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
     const [landmarkCounter, setLandmarkCounter] = useState(0);
     // Initialize landmarksBatch with the correct type
     const [landmarksBatch, setLandmarksBatch] = useState<NormalizedLandmark[][]>([]);
-    const [message, setMessage] = useState(''); // State to store the response
     const framesToSend = 10; // Number of frames to send in a batch
     const [geminiText, setGeminiText] = useState('');
-    const [words, setWords] = useState<WordArray>([]);
+    const [words, setWords] = useState<string[]>([]);
 
     // NEED TO CALL GEMINI SOCKET, WITH 10 words, if the length is a multiple of 10
 
@@ -126,14 +121,12 @@ const CameraFeed: React.FC = () => {
     useEffect(() => {
         const handleOutput = (data: any) => {
             console.log('Received data:', data);
-            const newWords: WordArray = Array.isArray(data) ? data : [data]; // Specify the type for newWords
-            setWords((prevWords: WordArray) => {
-                const updatedWords = [...prevWords, ...newWords];
+            const newWords: string[] = Array.isArray(data) ? data : [data]; // Specify the type for newWords
+            setWords((prevWords: string[]) => {
+                let updatedWords = [...prevWords, ...newWords];
                 if (updatedWords.length % 10 === 0) {
-                    
                     const words = updatedWords.slice(-10);
                     const prompt = 'You are an ASL expert and I want you to finish my sentences. I will provide you a list of 10 words and you have to emphasize on the greatest number of words with the words that make the most sense. Given the context of any situation, choose which sentence would make the most sense to say. Here are the words: ' + words + '. Generate a sentence based off of this set.'
-                    
                     socket.emit('gemini_request', JSON.stringify({ "prompt":  prompt}));
                 }
                 return updatedWords;
@@ -192,6 +185,16 @@ const CameraFeed: React.FC = () => {
                         <div className="relative w-full max-w-lg transition">
                             <video ref={videoRef} autoPlay playsInline className="w-full rounded shadow-lg" />
                             <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
+                        </div>
+                        <div className="flex overflow-x-scroll whitespace-nowrap text-white text-2xl font-light m-4 space-x-2 pr-3" style={{ width: '500px'}}>
+                            {words.map((word, index) => (
+                                index >= words.length - 10 && (<div key={index} className="">
+                                    {word}
+                                </div>)
+                            ))}
+                        </div>
+                        <div className="text-gold-200 text-2xl font-light m-4">
+                            {geminiText}
                         </div>
                     </>
                 )

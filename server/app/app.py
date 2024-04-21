@@ -40,13 +40,13 @@ app.config['SECRET_KEY'] = 'secret!'
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-interpreter = tf.lite.Interpreter("flask/signserver/model.tflite")
+interpreter = tf.lite.Interpreter("signserver/model.tflite")
 
-train_df = pd.read_csv('flask/signserver/train.csv')
+train_df = pd.read_csv('signserver/train.csv')
 
 # decorder 
-s2p_map = {k.lower():v for k,v in read_json_file("flask/signserver/sign_to_prediction_index_map.json").items()}
-p2s_map = {v:k for k,v in read_json_file("flask/signserver/sign_to_prediction_index_map.json").items()}
+s2p_map = {k.lower():v for k,v in read_json_file("signserver/sign_to_prediction_index_map.json").items()}
+p2s_map = {v:k for k,v in read_json_file("signserver/sign_to_prediction_index_map.json").items()}
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 train_df['label'] = train_df.sign.map(encoder)
@@ -138,6 +138,6 @@ def test_disconnect():
 
 
 if __name__ == '__main__':
-    socketio.run(app,host='0.0.0.0',port=8080, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8080)
 
 

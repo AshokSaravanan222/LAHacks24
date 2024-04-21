@@ -19,7 +19,7 @@ RUN cd /tmp && \
     make && make install && \
     rm -rf /tmp/*
 
-# Set environment variable
+# Set environment variable for HDF5
 ENV HDF5_DIR=/usr/local/hdf5
 
 # Install Python dependencies
@@ -31,7 +31,11 @@ RUN pip install --no-binary=h5py h5py && \
 # Copy the application
 COPY . /app
 
+# Expose port 8080 for the application
 EXPOSE 8080
 
-# Set the command
-CMD ["python", "app.py"]
+# Use ENTRYPOINT to specify the command for starting the Flask server
+ENTRYPOINT ["python"]
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:8080", "app:socketio"]
+
+

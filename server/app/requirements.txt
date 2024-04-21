@@ -21,7 +21,9 @@ google-pasta==0.2.0
 googleapis-common-protos==1.63.0
 grpcio==1.62.2
 grpcio-status==1.62.2
+gunicorn==22.0.0
 h11==0.14.0
+h5py==3.11.0
 httplib2==0.22.0
 idna==3.7
 itsdangerous==2.2.0
