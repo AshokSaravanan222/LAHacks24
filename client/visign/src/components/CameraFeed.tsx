@@ -159,15 +159,15 @@ const CameraFeed: React.FC = () => {
 
     return (
         <div className="flex flex-col items-center p-4 relative">
-            <div className="mb-4">
+            <div className="mb-2">
                 <button onClick={() => setEnableCamera(!enableCamera)}
-                        className="mb-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-400 transition shadow">
+                        className="mb-2 px-2 py-1 bg-blue-500 text-white font-semibold rounded hover:bg-blue-400 transition shadow">
                     {enableCamera ? 'Disable Camera' : 'Enable Camera'}
                 </button>
             </div>
             {enableCamera &&
                 (
-                    <>
+                    <div className="flex flex-col items-center outline-4 outline-cyan-800 outline rounded-2xl p-4">
                         <div className="flex mb-4 text-white font-light">
                             <label className="inline-flex items-center px-2">
                                 <input type="checkbox" checked={showHands} onChange={e => setShowHands(e.target.checked)} />
@@ -182,27 +182,24 @@ const CameraFeed: React.FC = () => {
                                 <span className="ml-2">Face</span>
                             </label>
                         </div>
-                        <div className="relative w-full max-w-lg transition">
-                            <video ref={videoRef} autoPlay playsInline className="w-full rounded shadow-lg" />
+                        <div className="relative w-full max-w-lg transition shadow-lg">
+                            <video ref={videoRef} autoPlay playsInline className="w-full rounded-2xl shadow-lg" />
                             <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                         </div>
                         <div className="relative p-4">
                             {/* Overflow container */}
-                            <div className="relative overflow-hidden bg-gray-200 p-3" style={{ width: '600px', height: '100px' }}>
-                                {/* Scrolling content */}
-                                <div className="flex whitespace-nowrap space-x-2 transition-transform transform-gpu" style={{ transform: 'translateX(-50%)' }}>
-                                    {words.map((word, index) => (
-                                        index >= words.length - 10 && (<div key={index} className="inline-flex items-center justify-center bg-blue-500 text-white p-2 rounded">
-                                            {word}
-                                        </div>)
-                                    ))}
+                            <div className="flex overflow-x-scroll px-3 py-1 whitespace-nowrap justify-end items-center rounded-full bg-cyan-800 shadow-lg" style={{ width: '500px'}}>
+                                {words.map((word, index) => (
+                                    index >= words.length - 10 && (<div key={index} className={"text-2xl font-light inline-block p-2 transition " + ((index == words.length - 1) ? " underline text-gray-100" : " text-white")}>
+                                        {word}
+                                    </div>)
+                                ))}
+                                <div className="text-4xl px-2 text-green-300">
+                                    {"<"}
                                 </div>
-                                {/* Gradient overlays */}
-                                <div className="absolute top-0 left-0 bottom-0 w-1/4 bg-gradient-to-r from-gray-200 via-gray-200 to-transparent"></div>
-                                <div className="absolute top-0 right-0 bottom-0 w-1/4 bg-gradient-to-l from-gray-200 via-gray-200 to-transparent"></div>
                             </div>
                         </div>
-                    </>
+                    </div>
                 )
             }
         </div>
