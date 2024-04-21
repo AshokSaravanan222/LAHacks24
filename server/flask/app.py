@@ -40,13 +40,13 @@ app.config['SECRET_KEY'] = 'secret!'
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-interpreter = tf.lite.Interpreter("flask/signserver/model.tflite")
+interpreter = tf.lite.Interpreter("signserver/model.tflite")
 
-train_df = pd.read_csv('flask/signserver/train.csv')
+train_df = pd.read_csv('signserver/train.csv')
 
 # decorder 
-s2p_map = {k.lower():v for k,v in read_json_file("flask/signserver/sign_to_prediction_index_map.json").items()}
-p2s_map = {v:k for k,v in read_json_file("flask/signserver/sign_to_prediction_index_map.json").items()}
+s2p_map = {k.lower():v for k,v in read_json_file("signserver/sign_to_prediction_index_map.json").items()}
+p2s_map = {v:k for k,v in read_json_file("signserver/sign_to_prediction_index_map.json").items()}
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 train_df['label'] = train_df.sign.map(encoder)
@@ -105,13 +105,17 @@ def handle_landmarks(data):
     output = predict_fn(inputs=xyz)
     prediction_indices = output['outputs'].reshape(-1)
     max_index = prediction_indices.argmax()
+    top_5_indices = prediction_indices.argsort()[-5:][::-1]
 
     # Decode the prediction to human-readable form
     result = decoder(max_index)
+    top_5_results = [decoder(index) for index in top_5_indices]
 
     # Output results and clear references
     print(result)
-    socketio.emit('output', result)
+    print(top_5_results)
+    print("test")
+    socketio.emit('output', str(result))
 
     # Make sure to delete references if there's no further use
     del data, xyz, output, predict_fn
