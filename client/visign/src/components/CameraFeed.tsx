@@ -161,7 +161,7 @@ const CameraFeed: React.FC = () => {
         draw(holisticResults.leftHandLandmarks, HAND_CONNECTIONS);
         draw(holisticResults.rightHandLandmarks, HAND_CONNECTIONS);
         draw(holisticResults.poseLandmarks, POSE_CONNECTIONS);
-        draw(holisticResults.faceLandmarks, FACEMESH_TESSELATION);
+        // draw(holisticResults.faceLandmarks, FACEMESH_TESSELATION);
 
         if (showCamera) {
             requestAnimationFrame(predictWebcam);
