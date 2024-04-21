@@ -1,30 +1,46 @@
-import React from 'react';
-import OpenAI from 'openai';
+import React, { useState, useEffect } from 'react';
+import { OpenAI } from 'openai'; // Assuming OpenAI SDK is imported like this
 
-interface ProgressBarProps {
-  progress: number; // Progress value (0 to 100)
-  text: string; // Text to display along with the progress bar
+interface AudioPlayerProps {
+  progress: number;
 }
 
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ progress: string }) => {
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchAudio = async () => {
+      try {
+        const client = new OpenAI(); // Initialize OpenAI client
+        const response = await client.audio.speech.create({
+          model: "tts-1",
+          voice: "alloy",
+          input: `Progress is at ${progress}%.`,
+        });
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioUrl(audioUrl);
+      } catch (error) {
+        console.error('Error fetching audio:', error);
+      }
+    };
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ text: string }) => {
+    fetchAudio();
 
-
-    const response = await openai.textTools.textToSpeech({
-        text: text,
-        speaker: voice, // Specify the voice, e.g., 'texttospeech', 'texttospeech:female' (optional)
-      });
-
+    // Clean up the audio URL when component unmounts
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [progress]);
 
   return (
-    <div className="progress-bar-container">
-      <div className="progress-bar">
-        <div className="progress" style={{ width: `${progress}%` }}></div>
-      </div>
-      <span className="progress-text">{text}</span>
+    <div>
+      <p>Progress: {progress}%</p>
+      {audioUrl && <audio controls src={audioUrl} />}
     </div>
   );
 };
 
-export default ProgressBar;
+export default AudioPlayer;
