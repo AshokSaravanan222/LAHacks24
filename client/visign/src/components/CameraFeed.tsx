@@ -26,10 +26,10 @@ const CameraFeed: React.FC = () => {
 
     const processLandmarks = (results: HolisticLandmarkerResult) => {
         const allLandmarks = [
-            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
             ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
+            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
+            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
         ];
         
         // Step 1: Initialize placeholders for axis checks

@@ -1,7 +1,7 @@
 # init a inferencer
 #         # call the predict
 #         return input_data
-from inference import Inferencer
+from server.flask.inference import Inferencer
 import pandas as pd
 inferencer = Inferencer(model_path="model.tflite")
 
