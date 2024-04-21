@@ -182,13 +182,13 @@ const CameraFeed: React.FC = () => {
                                 <span className="ml-2">Face</span>
                             </label>
                         </div>
-                        <div className="relative w-full max-w-lg transition shadow-lg">
+                        <div className="relative w-full transition shadow-lg">
                             <video ref={videoRef} autoPlay playsInline className="w-full rounded-2xl shadow-lg" />
                             <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
                         </div>
-                        <div className="relative p-4">
+                        <div className="relative p-4 pt-8">
                             {/* Overflow container */}
-                            <div className="flex overflow-x-scroll px-3 py-1 whitespace-nowrap justify-end items-center rounded-full bg-cyan-800 shadow-lg" style={{ width: '500px'}}>
+                            <div className="flex overflow-x-scroll px-3 py-2 whitespace-nowrap justify-end items-center rounded-full bg-cyan-800 shadow-lg" style={{ width: '500px'}}>
                                 {words.map((word, index) => (
                                     index >= words.length - 10 && (<div key={index} className={"text-2xl font-light inline-block p-2 transition " + ((index == words.length - 1) ? " underline text-gray-100" : " text-white")}>
                                         {word}
