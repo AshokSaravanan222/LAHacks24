@@ -1,20 +1,37 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.11
 
-# Set the working directory to /app
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhdf5-dev \
+    cmake \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install HDF5 from source
+ENV HDF5_VERSION=1.10.6
+RUN cd /tmp && \
+    wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz && \
+    tar -xzvf hdf5-${HDF5_VERSION}.tar.gz && \
+    cd hdf5-${HDF5_VERSION} && \
+    ./configure --prefix=/usr/local/hdf5 && \
+    make && make install && \
+    rm -rf /tmp/*
+
+# Set environment variable
+ENV HDF5_DIR=/usr/local/hdf5
+
+# Install Python dependencies
+COPY requirements.txt /app/
 WORKDIR /app
+RUN pip install --no-binary=h5py h5py && \
+    pip install -r requirements.txt
 
-# Copy the current directory contents into the container at /app
+# Copy the application
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Make port 8080 available to the world outside this container
 EXPOSE 8080
 
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
+# Set the command
 CMD ["python", "app.py"]

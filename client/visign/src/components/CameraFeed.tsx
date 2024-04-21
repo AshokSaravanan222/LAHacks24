@@ -7,6 +7,10 @@ import {
 import { socket } from '@/socket';
 import { drawAllLandmarks } from '@/drawing_utils';
 
+// Define the type for a batch of landmarks
+type LandmarkBatch = NormalizedLandmark[][];
+type WordArray = string[]; // Define a type for your words array
+
 const CameraFeed: React.FC = () => {
     const [enableCamera, setEnableCamera] = useState<boolean>(false);
     const [showHands, setShowHands] = useState(true);
@@ -20,13 +24,17 @@ const CameraFeed: React.FC = () => {
     const [landmarksBatch, setLandmarksBatch] = useState<NormalizedLandmark[][]>([]);
     const [message, setMessage] = useState(''); // State to store the response
     const framesToSend = 10; // Number of frames to send in a batch
+    const [geminiText, setGeminiText] = useState('');
+    const [words, setWords] = useState<WordArray>([]);
+
+    // NEED TO CALL GEMINI SOCKET, WITH 10 words, if the length is a multiple of 10
 
     const processLandmarks = (results: HolisticLandmarkerResult, setLandmarksBatch: Function) => {
         const allLandmarks = [
-            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
-            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
             ...(results.faceLandmarks.length !== 0 ? results.faceLandmarks[0].slice(0, 468) : Array(468).fill(null)),
+            ...(results.leftHandLandmarks.length !== 0 ? results.leftHandLandmarks[0] : Array(21).fill(null)),
+            ...(results.poseLandmarks.length !== 0 ? results.poseLandmarks[0] : Array(33).fill(null)),
+            ...(results.rightHandLandmarks.length !== 0 ? results.rightHandLandmarks[0] : Array(21).fill(null)),
         ];
 
         // Step 1: Initialize placeholders for axis checks
@@ -116,17 +124,36 @@ const CameraFeed: React.FC = () => {
     };
 
     useEffect(() => {
-        // Setting up the listener for the 'response' event
-        socket.on('output', (data: any) => {
+        const handleOutput = (data: any) => {
             console.log('Received data:', data);
-            setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
-        });
-
-        // Cleanup function to remove the listener
-        return () => {
-            socket.off('output');
+            const newWords: WordArray = Array.isArray(data) ? data : [data]; // Specify the type for newWords
+            setWords((prevWords: WordArray) => {
+                const updatedWords = [...prevWords, ...newWords];
+                if (updatedWords.length % 10 === 0) {
+                    
+                    const words = updatedWords.slice(-10);
+                    const prompt = 'You are an ASL expert and I want you to finish my sentences. I will provide you a list of 10 words and you have to emphasize on the greatest number of words with the words that make the most sense. Given the context of any situation, choose which sentence would make the most sense to say. Here are the words: ' + words + '. Generate a sentence based off of this set.'
+                    
+                    socket.emit('gemini_request', JSON.stringify({ "prompt":  prompt}));
+                }
+                return updatedWords;
+            });
         };
-    }, []);
+    
+        const handleGemini = (data: any) => {
+            console.log('Received gemini data:', data);
+            setGeminiText(data.message); // Update the geminiText state
+        };
+    
+        socket.on('output', handleOutput);
+        socket.on('gemini_response', handleGemini);
+    
+        return () => {
+            socket.off('output', handleOutput);
+            socket.off('gemini_response', handleGemini);
+        };
+    }, [socket]);
+    
 
     useEffect(() => {
         if (enableCamera) {
