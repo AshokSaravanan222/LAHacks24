@@ -103,20 +103,16 @@ def handle_landmarks(data):
 
     # Execute the prediction function and handle the output directly
     output = predict_fn(inputs=xyz)
-    prediction_indices = output['outputs'].reshape(-1)
-    max_index = prediction_indices.argmax()
-    top_5_indices = prediction_indices.argsort()[-5:][::-1]
-
+    logits = output['outputs'].reshape(-1)  # Assuming outputs are logits
+    probabilities = tf.nn.softmax(logits).numpy()  # Convert logits to probabilities
+    max_index = logits.argmax()  # Index of the highest probability
+    max_probability = probabilities[max_index]  # Highest probability
     # Decode the prediction to human-readable form
     result = decoder(max_index)
-    top_5_results = [decoder(index) for index in top_5_indices]
-
+    if max_probability >= 0.10:
+      print(max_probability, "||", result)
+      socketio.emit('output', result)
     # Output results and clear references
-    print(result)
-    print(top_5_results)
-    print("test")
-    socketio.emit('output', str(result))
-
     # Make sure to delete references if there's no further use
     del data, xyz, output, predict_fn
     
@@ -142,6 +138,6 @@ def test_disconnect():
 
 
 if __name__ == '__main__':
-    socketio.run(app,host='0.0.0.0',port=8080, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8080)
 
 
