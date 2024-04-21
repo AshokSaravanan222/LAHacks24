@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from inference import Inferencer
 import json
+from server.run import generate_response
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -38,6 +39,18 @@ def test_disconnect():
 def message():
     print('Hello World!')
     return 'Hello World!'
+
+# Hopefully this is called when the list = 10 to generate a sentence
+@socketio.on('generated_sentence') 
+def generated_response(data):
+    ten_word_array = []
+    while len(ten_word_array) < 10:
+        prediction = interpreter.predict(data)
+        ten_word_array.append(prediction)
+        if len(ten_word_array) == 10:
+            response = generate_response(ten_word_array)
+            ten_word_array.clear()
+            socketio.emit('response', response)
 
 
 if __name__ == '__main__':
