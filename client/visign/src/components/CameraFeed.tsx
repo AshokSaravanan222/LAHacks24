@@ -167,7 +167,7 @@ const CameraFeed: React.FC = () => {
             </div>
             {enableCamera &&
                 (
-                    <div className="flex flex-col items-center outline-4 outline-cyan-800 outline rounded-2xl p-4">
+                    <div className="flex flex-col items-center">
                         <div className="flex mb-4 text-white font-light">
                             <label className="inline-flex items-center px-2">
                                 <input type="checkbox" checked={showHands} onChange={e => setShowHands(e.target.checked)} />
