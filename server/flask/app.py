@@ -51,7 +51,7 @@ encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 train_df['label'] = train_df.sign.map(encoder)
 
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_KEY = "AIzaSyBqF1tP8UWr9govt44Vu-frpALNVR38tgA"
 genai.configure(api_key=GEMINI_KEY)
 
 generation_config = {
@@ -117,17 +117,13 @@ def handle_landmarks(data):
     del data, xyz, output, predict_fn
     
 
-@socketio.on('gemini')
+@socketio.on('gemini_request')
 def handle_gemini(data):
-    # data must be a list of words
-    input_prompt = (f'I am a new ASL learner and I have created an '
-                    f'application where it translates ASL and prints out words. '
-                    f'These words are later stored in to a set to avoid duplicates. '
-                    f'The set currently contains: {", ".join(data)}. '
-                    f'Generate a sentence based off of this set.')
+    input_prompt = json.loads(data)["prompt"]
     response = model.generate_content([input_prompt])
     generated_sentence = response._result.candidates[0].content.parts[0].text
-    socketio.emit('gemini', generated_sentence)
+    print(generated_sentence)
+    socketio.emit('gemini_response', generated_sentence)
 
 # if someone connect to the server, it will print the message
 @socketio.on('connect')
