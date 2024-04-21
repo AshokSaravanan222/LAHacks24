@@ -77,7 +77,7 @@ class Inferencer:
         print(data.shape)
         print(type(data))
         print(type(input_data)) 
-        print(input_data) # str
+       # print(input_data) # str
 
         n_frames = int(len(data) / ROWS_PER_FRAME)
         

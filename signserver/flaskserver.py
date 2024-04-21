@@ -17,10 +17,28 @@ def handle_message(data):
     print('received message: ', json.dumps(data))
     socketio.emit('output', interpreter.predict(data))
 
+
+data_set=[]
 @socketio.on('landmark') # from end 
 def handle_landmarks(data):
    # print('received landmarks: ', json.dumps(data))
-    socketio.emit('output', interpreter.predict(data)) #
+    # collect 10 data and combine them to do next step
+    if len(data_set) < 10:
+        data_set.append(data)
+    else:
+        # combint all the data in data_set to one data
+
+        # connect each of the data_set to one string and send to the model
+        result = [] 
+        for i in data_set:
+            # i is str and turn it as a list 
+            result.extend(json.loads(i))
+        
+        # make result as str 
+        data = json.dumps(result)
+
+        socketio.emit('output', interpreter.predict(data)) #
+        data_set.clear()
     
 
 # if someone connect to the server, it will print the message
