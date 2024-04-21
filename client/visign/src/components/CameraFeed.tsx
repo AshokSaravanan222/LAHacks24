@@ -169,17 +169,29 @@ const CameraFeed: React.FC = () => {
     };
 
     useEffect(() => {
-        // Setting up the listener for the 'response' event
-        socket.on('output', (data: any) => {
-            console.log('Received data:', data);
+        // Handler for 'output' event
+        const handleOutput = (data: any) => {
+            console.log('Received output:', data);
             setMessage(data.message); // Assuming 'data.message' is the part of the server response you want to use
-        });
-
-        // Cleanup function to remove the listener
-        return () => {
-            socket.off('output');
         };
-    }, []);
+    
+        // Handler for 'response' event
+        const handleResponse = (data: any) => {
+            console.log('Received response:', data);
+            // Handle the data from the 'response' event
+            // You might want to set some other state based on this response
+        };
+    
+        // Setting up the listeners
+        socket.on('output', handleOutput);
+        socket.on('response', handleResponse);
+    
+        // Cleanup function to remove the listeners
+        return () => {
+            socket.off('output', handleOutput);
+            socket.off('response', handleResponse);
+        };
+    }, []); // Empty dependency array ensures this runs only once after the component mounts    
 
     useEffect(() => {
         if (showCamera) {
